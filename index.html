@@ -861,8 +861,8 @@ function montarConf() {
 function calcPremio() {
   const pagos = CACHE.apostas.filter(a => a.pago).length;
   const total = CACHE.apostas.length;
-  // Usar total de apostas para mostrar prêmio estimado (incentiva pagamento)
-  const bruto = total * (CACHE.cfg.val || 50);
+  // Prêmio só conta apostas PAGAS
+  const bruto = pagos * (CACHE.cfg.val || 50);
   const com = (CACHE.cfg.com || 20) / 100;
   return {
     bruto,
@@ -923,12 +923,12 @@ function renderRanking() {
     return;
   }
 
-  // 3º lugar: jogador PAGO com MENOS pontos
+  // 3º lugar: jogador PAGO com MENOS pontos (mínimo 2 pagos para ter 3º)
   const pagoComPts = jogComPts.filter(j => {
     const ap = CACHE.apostas.find(a => a.jog === j.id);
     return ap && ap.pago;
   });
-  const terceiroPremiadoId = pagoComPts.length >= 2 ? pagoComPts[pagoComPts.length - 1].id : null;
+  const terceiroPremiadoId = pagoComPts.length >= 3 ? pagoComPts[pagoComPts.length - 1].id : null;
 
   const meta = CACHE.cfg.meta || 10;
   const emojis = ['🥇', '🥈', '🥉'];
@@ -940,7 +940,13 @@ function renderRanking() {
     const pct = Math.min(100, Math.round(j.pts / meta * 100));
     const isEu = EU && j.id === EU.id;
     const isTerceiroPremio = j.id === terceiroPremiadoId;
-    const posLabel = isTerceiroPremio ? '🥉' : (emojis[i] || (i + 1));
+    const isPago = aposta && aposta.pago;
+    const pagoIndex = isPago ? pagoComPts.findIndex(p => p.id === j.id) : -1;
+    let posLabel;
+    if (isTerceiroPremio) posLabel = '🥉';
+    else if (isPago && pagoIndex === 0) posLabel = '🥇';
+    else if (isPago && pagoIndex === 1) posLabel = '🥈';
+    else posLabel = (i + 1);
 
     // Números com destaque nos acertos
     const numsHtml = nums.map(n => {
