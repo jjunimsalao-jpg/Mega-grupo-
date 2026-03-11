@@ -867,8 +867,8 @@ function calcPremio() {
   return {
     bruto,
     liquido: bruto * (1 - com),
-    p1: bruto * (1 - com) * 0.5,
-    p2: bruto * (1 - com) * 0.2,
+    p1: bruto * (1 - com) * 0.6,
+    p2: bruto * (1 - com) * 0.3,
     p3: bruto * (1 - com) * 0.1,
     pagos,
     total
@@ -1289,8 +1289,8 @@ function renderAdmFin() {
     <div class="card">
       <div style="font-weight:800;margin-bottom:8px">Distribuição sugerida</div>
       <div style="font-size:13px;display:flex;flex-direction:column;gap:6px">
-        <div style="display:flex;justify-content:space-between"><span>🥇 1º lugar (50%)</span><span style="color:var(--green);font-weight:700">R$ ${(premio*.5).toFixed(2).replace('.',',')}</span></div>
-        <div style="display:flex;justify-content:space-between"><span>🥈 2º lugar (20%)</span><span style="color:var(--green);font-weight:700">R$ ${(premio*.2).toFixed(2).replace('.',',')}</span></div>
+        <div style="display:flex;justify-content:space-between"><span>🥇 1º lugar (60%)</span><span style="color:var(--green);font-weight:700">R$ ${(premio*.6).toFixed(2).replace('.',',')}</span></div>
+        <div style="display:flex;justify-content:space-between"><span>🥈 2º lugar (30%)</span><span style="color:var(--green);font-weight:700">R$ ${(premio*.3).toFixed(2).replace('.',',')}</span></div>
         <div style="display:flex;justify-content:space-between"><span>🥉 Menor pts (10%)</span><span style="color:var(--green);font-weight:700">R$ ${(premio*.1).toFixed(2).replace('.',',')}</span></div>
       </div>
     </div>`;
