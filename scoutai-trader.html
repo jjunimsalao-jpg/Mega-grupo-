@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScoutAI Trader</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@700;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#030a0f;color:#a0cce0;font-family:'Share Tech Mono',monospace;min-height:100vh;padding-bottom:60px}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(rgba(0,180,255,0.012) 1px,transparent 1px),linear-gradient(90deg,rgba(0,180,255,0.012) 1px,transparent 1px);background-size:50px 50px;z-index:0}
+.wrap{position:relative;z-index:1;max-width:740px;margin:0 auto;padding:0 14px}
+.panel{background:rgba(0,15,25,0.97);border:1px solid rgba(0,180,255,0.15);border-radius:10px;padding:16px 18px;box-shadow:0 4px 24px rgba(0,0,0,0.5);margin-bottom:14px}
+.panel.glow{border-color:rgba(0,180,255,0.4)}
+lbl{display:block;font-size:10px;color:#2a5a70;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+input{background:#000d18;border:1px solid rgba(0,180,255,0.2);border-radius:6px;padding:12px 14px;color:#00b4ff;font-family:'Share Tech Mono',monospace;font-size:14px;outline:none;width:100%}
+input::placeholder{color:#2a5a70}
+.btn{width:100%;background:rgba(0,180,255,0.1);border:1px solid #00b4ff;border-radius:7px;padding:14px;color:#00b4ff;font-family:'Orbitron',monospace;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:2px;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn:disabled{background:#0a2535;border-color:#2a5a70;color:#2a5a70;cursor:not-allowed}
+.tabs{display:flex;gap:4px;margin-bottom:12px}
+.tab{flex:1;padding:9px 2px;background:#0a2535;border:1px solid transparent;border-radius:6px;color:#2a5a70;font-family:'Share Tech Mono',monospace;font-size:9px;cursor:pointer;letter-spacing:1px}
+.tab.on{background:rgba(0,180,255,0.15);border-color:#00b4ff;color:#00b4ff}
+.badge{display:inline-block;border-radius:4px;padding:3px 10px;font-size:11px;letter-spacing:1px;white-space:nowrap;margin:3px}
+.bar-wrap{flex:1;height:6px;background:#051520;border-radius:3px;overflow:hidden}
+.bar{height:100%;border-radius:3px;transition:width 1.4s ease}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.sbox{background:#000d18;border-radius:6px;padding:10px;text-align:center;border:1px solid #0a2535}
+.divider{height:1px;background:rgba(0,180,255,0.08);margin:12px 0}
+.spinner{width:18px;height:18px;border:2px solid #0a2535;border-top:2px solid #00b4ff;border-radius:50%;animation:spin 0.7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes glow{0%,100%{text-shadow:0 0 15px #00b4ff}50%{text-shadow:0 0 40px #00b4ff,0 0 80px rgba(0,180,255,0.3)}}
+.title{font-family:'Orbitron',monospace;font-weight:900;font-size:36px;letter-spacing:5px;color:#00b4ff;animation:glow 3s infinite}
+.live{width:7px;height:7px;border-radius:50%;background:#00ff88;animation:blink 1.5s infinite;display:inline-block;margin-right:6px}
+.fade{animation:fadeUp 0.4s ease}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <div style="text-align:center;padding:28px 0 16px">
+    <div style="font-size:10px;color:#00ff88;letter-spacing:3px;margin-bottom:6px">
+      <span class="live"></span>SISTEMA ATIVO // DADOS REAIS // TRADER MODE
+    </div>
+    <div class="title">SCOUT<span style="color:#e8f4ff">AI</span></div>
+    <div style="color:#2a5a70;font-size:10px;letter-spacing:2px;margin-top:4px">API-FOOTBALL + CLAUDE AI // TRADER EDITION</div>
+  </div>
+
+  <!-- AVISO -->
+  <div style="background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.2);border-radius:6px;padding:8px 14px;margin-bottom:14px;display:flex;gap:8px;align-items:center">
+    <span>⚠️</span>
+    <span style="color:#ffd700;font-size:10px;letter-spacing:1px">FERRAMENTA DE APOIO À DECISÃO. NÃO GARANTE LUCROS. +18</span>
+  </div>
+
+  <!-- BUSCA -->
+  <div class="panel glow" id="box-busca">
+    <div class="grid2" style="gap:10px;margin-bottom:10px">
+      <div>
+        <lbl>⚽ PARTIDA</lbl>
+        <input id="inp-jogo" placeholder="Ex: Flamengo x Palmeiras" onkeydown="if(event.key==='Enter')analisar()">
+      </div>
+      <div>
+        <lbl>💰 BANCA (R$)</lbl>
+        <input id="inp-banca" placeholder="500" style="color:#ffd700">
+      </div>
+    </div>
+    <button class="btn" id="btn-analisar" onclick="analisar()">⚡ ANALISAR COMO TRADER</button>
+    <div id="status-msg" style="margin-top:10px;font-size:11px;color:#00b4ff;display:none;align-items:center;gap:8px">
+      <div class="spinner"></div><span id="status-txt">Analisando...</span>
+    </div>
+    <div id="erro-msg" style="color:#ff3355;font-size:11px;margin-top:10px;display:none"></div>
+  </div>
+
+  <!-- HISTORICO -->
+  <div class="panel hidden" id="box-historico">
+    <lbl>📋 HISTÓRICO DE ANÁLISES</lbl>
+    <div id="lista-historico"></div>
+  </div>
+
+  <!-- RESULTADO -->
+  <div id="box-resultado" class="hidden fade">
+
+    <!-- VEREDICTO -->
+    <div class="panel" id="card-veredicto" style="text-align:center;margin-bottom:12px">
+      <div id="verd-icon" style="font-size:44px;margin-bottom:6px"></div>
+      <div id="verd-texto" style="font-family:'Orbitron',monospace;font-weight:900;font-size:26px;letter-spacing:4px;margin-bottom:6px"></div>
+      <div id="verd-motivo" style="font-family:'Rajdhani',monospace;font-weight:600;font-size:14px;color:#e8f4ff;margin-bottom:12px"></div>
+      <div id="verd-badges"></div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab on" onclick="trocarTab('analise',this)">📊 ANÁLISE</button>
+      <button class="tab" onclick="trocarTab('gestao',this)">💰 GESTÃO</button>
+      <button class="tab" onclick="trocarTab('mercados',this)">🎯 MERCADOS</button>
+      <button class="tab" onclick="trocarTab('dados',this)">📈 DADOS</button>
+    </div>
+
+    <!-- TAB ANALISE -->
+    <div id="tab-analise">
+      <div class="panel green" id="card-aposta" style="margin-bottom:12px;border-color:rgba(0,255,136,0.3)">
+        <lbl style="color:#00ff88">🎯 APOSTA PRINCIPAL DO TRADER</lbl>
+        <div id="ap-mercado" style="font-family:'Rajdhani',monospace;font-weight:700;font-size:20px;color:#e8f4ff;margin-bottom:12px"></div>
+        <div class="grid3">
+          <div class="sbox"><div style="color:#2a5a70;font-size:9px;letter-spacing:1px;margin-bottom:4px">PROB. REAL</div><div id="ap-prob" style="color:#00b4ff;font-family:'Orbitron',monospace;font-size:18px;font-weight:700"></div></div>
+          <div class="sbox"><div style="color:#2a5a70;font-size:9px;letter-spacing:1px;margin-bottom:4px">ODD JUSTA</div><div id="ap-odd" style="color:#ffd700;font-family:'Orbitron',monospace;font-size:18px;font-weight:700"></div></div>
+          <div class="sbox"><div style="color:#2a5a70;font-size:9px;letter-spacing:1px;margin-bottom:4px">EDGE</div><div id="ap-edge" style="font-family:'Orbitron',monospace;font-size:18px;font-weight:700"></div></div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:12px">
+        <lbl>📊 PROBABILIDADES REAIS</lbl>
+        <div id="barras-prob"></div>
+      </div>
+
+      <div class="panel" style="margin-bottom:12px">
+        <lbl style="color:#00b4ff">🧠 ANÁLISE DO TRADER</lbl>
+        <div id="analise-txt" style="color:#e8f4ff;font-size:13px;line-height:1.8;border-left:2px solid #00b4ff;padding-left:14px;font-family:'Rajdhani',monospace;font-weight:600"></div>
+        <div id="erro-amador" style="margin-top:12px;background:rgba(255,51,85,0.05);border:1px solid rgba(255,51,85,0.2);border-radius:6px;padding:10px;display:none">
+          <span style="color:#ff3355;font-size:11px"></span>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-bottom:12px">
+        <div class="panel" style="text-align:center;margin-bottom:0">
+          <lbl>🎯 PLACAR + PROVÁVEL</lbl>
+          <div id="placar1" style="font-family:'Orbitron',monospace;color:#00ff88;font-size:30px;font-weight:700"></div>
+        </div>
+        <div class="panel" style="text-align:center;margin-bottom:0">
+          <lbl>2º OPÇÃO</lbl>
+          <div id="placar2" style="font-family:'Orbitron',monospace;color:#ffd700;font-size:30px;font-weight:700"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB GESTAO -->
+    <div id="tab-gestao" class="hidden">
+      <div class="panel" style="border-color:rgba(255,215,0,0.3);margin-bottom:12px">
+        <lbl style="color:#ffd700">💰 GESTÃO DE BANCA — KELLY SIMPLIFICADO</lbl>
+        <div style="background:#000d18;border-radius:8px;padding:16px;text-align:center;margin-bottom:12px">
+          <div style="color:#2a5a70;font-size:10px;letter-spacing:2px;margin-bottom:4px">APOSTAR</div>
+          <div id="kelly-pct" style="font-family:'Orbitron',monospace;color:#ffd700;font-size:40px;font-weight:900"></div>
+          <div style="color:#2a5a70;font-size:10px">DA SUA BANCA</div>
+        </div>
+        <div id="kelly-logica" style="color:#a0cce0;font-size:13px;line-height:1.8;margin-bottom:12px;font-family:'Rajdhani',monospace;font-weight:600"></div>
+        <div class="divider"></div>
+        <lbl>💵 EXEMPLOS PRÁTICOS</lbl>
+        <div id="kelly-exemplos"></div>
+        <div id="kelly-sua-banca" style="display:none;background:rgba(0,180,255,0.08);border:1px solid rgba(0,180,255,0.2);border-radius:6px;padding:12px;text-align:center;margin-top:8px">
+          <div style="color:#2a5a70;font-size:10px;margin-bottom:4px">SUA BANCA</div>
+          <div id="kelly-valor" style="color:#00b4ff;font-family:'Orbitron',monospace;font-size:22px;font-weight:700"></div>
+          <div style="color:#2a5a70;font-size:10px">VALOR RECOMENDADO</div>
+        </div>
+      </div>
+      <div class="panel">
+        <lbl style="color:#00b4ff">📐 REGRAS DO TRADER PROFISSIONAL</lbl>
+        <div id="regras-trader"></div>
+      </div>
+    </div>
+
+    <!-- TAB MERCADOS -->
+    <div id="tab-mercados" class="hidden">
+      <div class="grid3" style="margin-bottom:12px" id="cards-mercados"></div>
+      <div class="panel" id="card-extras">
+        <lbl style="color:#00b4ff">🎯 OUTROS MERCADOS</lbl>
+        <div id="lista-extras"></div>
+      </div>
+    </div>
+
+    <!-- TAB DADOS -->
+    <div id="tab-dados" class="hidden">
+      <div class="grid2" style="margin-bottom:12px" id="cards-forma"></div>
+      <div class="panel" id="card-h2h">
+        <lbl style="color:#00b4ff">⚔️ CONFRONTOS DIRETOS (H2H)</lbl>
+        <div id="lista-h2h"></div>
+      </div>
+    </div>
+
+    <button class="btn" style="background:transparent;border-color:#0a2535;color:#2a5a70;margin-top:4px" onclick="novaAnalise()">← NOVA ANÁLISE</button>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// SCOUTAI TRADER — Configuração
+// ============================================================
+const API_FOOTBALL_KEY = "07d48b65b61b07b757c8678c0dad4624";
+
+const CLAUDE_SYSTEM = `Você é ScoutAI, analista esportivo com mentalidade de trader profissional de elite.
+Você recebe dados REAIS de uma API esportiva. NUNCA invente dados.
+FILOSOFIA: Value Betting + Kelly Criterion. Só apostar quando edge > 5%.
+Se não há edge claro, recomende PASSAR — proteger banca é lucro.
+
+Retorne APENAS JSON válido, sem markdown:
+{
+  "veredicto": "APOSTAR ou PASSAR",
+  "forca_sinal": "FORTE, MÉDIO ou FRACO",
+  "motivo_veredicto": "1 frase direta",
+  "aposta_principal": {
+    "mercado": "ex: Vitória Mandante / Over 2.5 / Ambas Marcam",
+    "probabilidade_real": "XX%",
+    "odd_justa": "X.XX",
+    "odd_mercado_ref": "X.XX",
+    "edge": "XX%",
+    "confianca": "ALTA, MÉDIA ou BAIXA"
+  },
+  "gestao_banca": {
+    "percentual_banca": "X%",
+    "logica": "explicação curta",
+    "exemplo_r100": "Banca R$100 → apostar R$X,XX",
+    "exemplo_r500": "Banca R$500 → apostar R$X,XX"
+  },
+  "probabilidades_reais": {
+    "mandante": "XX%",
+    "empate": "XX%",
+    "visitante": "XX%"
+  },
+  "mercados_extras": [
+    {"mercado": "nome", "recomendacao": "APOSTAR ou EVITAR", "motivo": "frase curta"}
+  ],
+  "over_under": {"linha": "2.5", "tendencia": "OVER ou UNDER", "media_gols_partida": "X.X", "confianca": "ALTA, MÉDIA ou BAIXA"},
+  "escanteios": {"media_total": "X.X", "tendencia": "MUITOS +10 / MÉDIO 8-10 / POUCOS -8", "aposta_sugerida": "Over ou Under X.5"},
+  "cartoes": {"media_total": "X.X", "tendencia": "JOGO QUENTE +4 / NORMAL 2-4 / TRANQUILO -2", "aposta_sugerida": "Over ou Under X.5"},
+  "placar_mais_provavel": "X x X",
+  "segundo_placar": "X x X",
+  "alerta_risco": "BAIXO, MÉDIO ou ALTO",
+  "zebra_possivel": "SIM ou NÃO",
+  "porcentagem_zebra": "XX%",
+  "analise_trader": "4-5 linhas estilo trader de elite",
+  "erros_comuns": "erro que apostador amador cometeria",
+  "score_confianca": 0
+}`;
+
+// ============================================================
+// API Football
+// ============================================================
+async function buscarTime(nome) {
+  const r = await fetch(`https://v3.football.api-sports.io/teams?search=${encodeURIComponent(nome)}`, {
+    headers: { "x-apisports-key": API_FOOTBALL_KEY }
+  });
+  const d = await r.json();
+  if (!d.response?.length) throw new Error(`Time "${nome}" não encontrado. Tente outro nome.`);
+  return d.response[0].team;
+}
+
+async function buscarPartidas(teamId, n = 6) {
+  const r = await fetch(`https://v3.football.api-sports.io/fixtures?team=${teamId}&last=${n}&status=FT`, {
+    headers: { "x-apisports-key": API_FOOTBALL_KEY }
+  });
+  const d = await r.json();
+  return d.response || [];
+}
+
+async function buscarH2H(id1, id2) {
+  const r = await fetch(`https://v3.football.api-sports.io/fixtures?h2h=${id1}-${id2}&last=8&status=FT`, {
+    headers: { "x-apisports-key": API_FOOTBALL_KEY }
+  });
+  const d = await r.json();
+  return d.response || [];
+}
+
+function parsearTime(matches, teamId) {
+  return matches.map(m => {
+    const isHome = m.teams.home.id === teamId;
+    const scored = isHome ? m.goals.home : m.goals.away;
+    const conceded = isHome ? m.goals.away : m.goals.home;
+    const winner = isHome ? m.teams.home.winner : m.teams.away.winner;
+    return {
+      adversario: isHome ? m.teams.away.name : m.teams.home.name,
+      gols: scored ?? 0,
+      golsSofridos: conceded ?? 0,
+      resultado: winner === true ? "W" : winner === false ? "L" : "D",
+      local: isHome ? "CASA" : "FORA",
+      data: m.fixture.date?.split("T")[0],
+      totalGols: (scored ?? 0) + (conceded ?? 0)
+    };
+  });
+}
+
+function calcularStats(parsed) {
+  const n = parsed.length || 1;
+  const avgS = (parsed.reduce((a, m) => a + m.gols, 0) / n).toFixed(2);
+  const avgC = (parsed.reduce((a, m) => a + m.golsSofridos, 0) / n).toFixed(2);
+  const avgG = (parsed.reduce((a, m) => a + m.totalGols, 0) / n).toFixed(2);
+  const forma = parsed.slice(0, 5).map(m => m.resultado);
+  const over25 = Math.round(parsed.filter(m => m.totalGols > 2).length / n * 100);
+  const btts = Math.round(parsed.filter(m => m.gols > 0 && m.golsSofridos > 0).length / n * 100);
+  return { avgS, avgC, avgG, forma, over25, btts };
+}
+
+// ============================================================
+// Claude AI
+// ============================================================
+async function chamarClaude(payload) {
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1000,
+      system: CLAUDE_SYSTEM,
+      messages: [{ role: "user", content: `Analise os dados REAIS abaixo como trader de elite. Retorne SOMENTE o JSON:\n\n${JSON.stringify(payload, null, 2)}` }]
+    })
+  });
+  const d = await r.json();
+  const raw = d.content?.find(b => b.type === "text")?.text || "";
+  const match = raw.replace(/```json|```/g, "").trim().match(/\{[\s\S]*\}/);
+  if (!match) throw new Error("IA retornou formato inválido");
+  return JSON.parse(match[0]);
+}
+
+// ============================================================
+// Estado global
+// ============================================================
+let dadosResultado = null;
+let historicoLocal = JSON.parse(localStorage.getItem("sai_hist") || "[]");
+
+// ============================================================
+// Análise principal
+// ============================================================
+async function analisar() {
+  const query = document.getElementById("inp-jogo").value.trim();
+  const banca = document.getElementById("inp-banca").value.trim();
+  const partes = query.split(/\s+[xX×vs\/]\s+/i);
+
+  if (partes.length < 2) {
+    mostrarErro('Use o formato: "Flamengo x Palmeiras"');
+    return;
+  }
+
+  const [n1, n2] = partes.map(s => s.trim());
+  setLoading(true);
+  esconderResultado();
+
+  try {
+    setStatus("🔍 Identificando times...");
+    const [t1, t2] = await Promise.all([buscarTime(n1), buscarTime(n2)]);
+
+    setStatus("📊 Coletando estatísticas reais...");
+    const [m1, m2, h2h] = await Promise.all([
+      buscarPartidas(t1.id, 6),
+      buscarPartidas(t2.id, 6),
+      buscarH2H(t1.id, t2.id)
+    ]);
+
+    const p1 = parsearTime(m1, t1.id);
+    const p2 = parsearTime(m2, t2.id);
+    const s1 = calcularStats(p1);
+    const s2 = calcularStats(p2);
+
+    const h2hParsed = h2h.map(m => ({
+      data: m.fixture.date?.split("T")[0],
+      mandante: m.teams.home.name,
+      placar: `${m.goals.home ?? "?"} x ${m.goals.away ?? "?"}`,
+      vencedor: m.teams.home.winner ? m.teams.home.name : m.teams.away.winner ? m.teams.away.name : "Empate",
+      totalGols: (m.goals.home ?? 0) + (m.goals.away ?? 0)
+    }));
+
+    const mediaGolsH2H = h2hParsed.length
+      ? (h2hParsed.reduce((a, m) => a + m.totalGols, 0) / h2hParsed.length).toFixed(2)
+      : "N/A";
+
+    const payload = {
+      partida: `${t1.name} (mandante) vs ${t2.name} (visitante)`,
+      bancaUsuario: banca ? `R$ ${banca}` : "Não informada",
+      mandante: { nome: t1.name, ultimos6: p1, forma: s1.forma, mediaGolsMarcados: s1.avgS, mediaGolsSofridos: s1.avgC, over25pct: `${s1.over25}%`, bttsPct: `${s1.btts}%` },
+      visitante: { nome: t2.name, ultimos6: p2, forma: s2.forma, mediaGolsMarcados: s2.avgS, mediaGolsSofridos: s2.avgC, over25pct: `${s2.over25}%`, bttsPct: `${s2.btts}%` },
+      confrontosDiretos: { partidas: h2hParsed, mediaGols: mediaGolsH2H }
+    };
+
+    setStatus("🧠 Analisando como trader de elite...");
+    const ai = await chamarClaude(payload);
+
+    dadosResultado = {
+      ai, banca,
+      mandante: { nome: t1.name, ...s1, matches: p1 },
+      visitante: { nome: t2.name, ...s2, matches: p2 },
+      h2h: h2hParsed
+    };
+
+    salvarHistorico(query, ai);
+    renderizarResultado();
+    setLoading(false);
+
+  } catch (e) {
+    setLoading(false);
+    mostrarErro(e.message || "Erro. Verifique os nomes dos times e tente novamente.");
+  }
+}
+
+// ============================================================
+// Renderização
+// ============================================================
+function renderizarResultado() {
+  const { ai, banca, mandante, visitante, h2h } = dadosResultado;
+  const isApostar = ai.veredicto === "APOSTAR";
+  const corVerd = isApostar ? "#00ff88" : "#ff3355";
+
+  // Veredicto
+  document.getElementById("card-veredicto").style.border = `2px solid ${corVerd}44`;
+  document.getElementById("verd-icon").textContent = isApostar ? "✅" : "⏸";
+  document.getElementById("verd-texto").style.color = corVerd;
+  document.getElementById("verd-texto").textContent = ai.veredicto;
+  document.getElementById("verd-motivo").textContent = ai.motivo_veredicto;
+
+  const corRisco = ai.alerta_risco === "BAIXO" ? "#00ff88" : ai.alerta_risco === "MÉDIO" ? "#ffd700" : "#ff3355";
+  const corSinal = ai.forca_sinal === "FORTE" ? "#00ff88" : ai.forca_sinal === "MÉDIO" ? "#ffd700" : "#ff3355";
+  document.getElementById("verd-badges").innerHTML = `
+    ${badge(corRisco, "RISCO " + ai.alerta_risco)}
+    ${badge("#00b4ff", "CONFIANÇA " + ai.score_confianca + "%")}
+    ${badge(corSinal, "SINAL " + ai.forca_sinal)}
+    ${badge(ai.zebra_possivel === "SIM" ? "#ff8c00" : "#2a5a70", "ZEBRA " + ai.zebra_possivel + " " + (ai.porcentagem_zebra || ""))}
+  `;
+
+  // Aposta principal
+  if (isApostar && ai.aposta_principal) {
+    document.getElementById("card-aposta").style.display = "block";
+    document.getElementById("ap-mercado").textContent = ai.aposta_principal.mercado;
+    document.getElementById("ap-prob").textContent = ai.aposta_principal.probabilidade_real;
+    document.getElementById("ap-odd").textContent = ai.aposta_principal.odd_justa;
+    const edgeNum = parseInt(ai.aposta_principal.edge);
+    const corEdge = edgeNum > 15 ? "#00ff88" : edgeNum > 5 ? "#ffd700" : "#ff3355";
+    document.getElementById("ap-edge").style.color = corEdge;
+    document.getElementById("ap-edge").textContent = ai.aposta_principal.edge;
+  } else {
+    document.getElementById("card-aposta").style.display = "none";
+  }
+
+  // Probabilidades
+  const probs = ai.probabilidades_reais;
+  document.getElementById("barras-prob").innerHTML = [
+    { l: mandante.nome, v: probs?.mandante, c: "#00b4ff" },
+    { l: "EMPATE", v: probs?.empate, c: "#ffd700" },
+    { l: visitante.nome, v: probs?.visitante, c: "#ff8c00" }
+  ].map(p => `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="width:120px;color:${p.c};font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.l}</div>
+      <div class="bar-wrap"><div class="bar" style="width:${parseInt(p.v)}%;background:${p.c};box-shadow:0 0 8px ${p.c}"></div></div>
+      <div style="width:36px;text-align:right;color:${p.c};font-weight:bold;font-size:13px">${p.v}</div>
+    </div>
+  `).join("");
+
+  // Análise trader
+  document.getElementById("analise-txt").textContent = ai.analise_trader;
+  if (ai.erros_comuns) {
+    const el = document.getElementById("erro-amador");
+    el.style.display = "block";
+    el.querySelector("span").textContent = "⚠️ ERRO DO AMADOR: " + ai.erros_comuns;
+  }
+
+  // Placares
+  document.getElementById("placar1").textContent = ai.placar_mais_provavel;
+  document.getElementById("placar2").textContent = ai.segundo_placar;
+
+  // Gestão de banca
+  if (ai.gestao_banca) {
+    document.getElementById("kelly-pct").textContent = ai.gestao_banca.percentual_banca;
+    document.getElementById("kelly-logica").textContent = ai.gestao_banca.logica;
+    document.getElementById("kelly-exemplos").innerHTML = [
+      ai.gestao_banca.exemplo_r100,
+      ai.gestao_banca.exemplo_r500
+    ].map(e => `<div style="background:#000d18;border-radius:6px;padding:10px;margin-bottom:6px;color:#00ff88;font-size:13px;font-family:'Rajdhani',monospace;font-weight:600">${e}</div>`).join("");
+
+    if (banca) {
+      const pct = parseFloat(ai.gestao_banca.percentual_banca) / 100;
+      const valor = (parseFloat(banca) * pct).toFixed(2);
+      document.getElementById("kelly-sua-banca").style.display = "block";
+      document.getElementById("kelly-valor").textContent = `R$ ${valor}`;
+      document.getElementById("kelly-valor").previousElementSibling.textContent = `SUA BANCA: R$ ${banca}`;
+    }
+  }
+
+  const regras = [
+    ["Nunca aposte mais de 3% da banca por jogo", "#ff3355"],
+    ["Se perder 10% da banca, pare no dia", "#ff8c00"],
+    ["Registre TODAS as apostas em planilha", "#ffd700"],
+    ["Edge abaixo de 5%? Não aposte — sem valor", "#a0cce0"],
+    ["100 apostas com 55% de acerto = lucro certo", "#00ff88"],
+    ["Resultado de 1 jogo não prova nada. Pense longo prazo", "#00b4ff"]
+  ];
+  document.getElementById("regras-trader").innerHTML = regras.map(([r, c], i) =>
+    `<div style="display:flex;gap:10px;align-items:flex-start;padding:7px 0;${i < 5 ? "border-bottom:1px solid #0a2535" : ""}">
+      <span style="color:${c};font-size:14px;flex-shrink:0">▸</span>
+      <span style="color:#a0cce0;font-size:12px;line-height:1.5">${r}</span>
+    </div>`
+  ).join("");
+
+  // Mercados
+  const ou = ai.over_under;
+  const esc = ai.escanteios;
+  const cart = ai.cartoes;
+  document.getElementById("cards-mercados").innerHTML = [
+    { l: "GOLS", icon: "⚽", v: `${ou?.linha} ${ou?.tendencia}`, sub: `Média: ${ou?.media_gols_partida}`, c: "#00b4ff" },
+    { l: "ESCANTEIOS", icon: "🚩", v: esc?.tendencia, sub: esc?.aposta_sugerida, c: "#ffd700" },
+    { l: "CARTÕES", icon: "🟨", v: cart?.tendencia, sub: cart?.aposta_sugerida, c: "#ff8c00" }
+  ].map(m => `
+    <div class="panel" style="margin-bottom:0;text-align:center">
+      <lbl>${m.icon} ${m.l}</lbl>
+      <div style="color:${m.c};font-size:13px;font-weight:bold;margin-bottom:4px;line-height:1.3">${m.v || "-"}</div>
+      <div style="color:#2a5a70;font-size:10px">${m.sub || ""}</div>
+    </div>
+  `).join("");
+
+  if (ai.mercados_extras?.length) {
+    document.getElementById("lista-extras").innerHTML = ai.mercados_extras.map((m, i) => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;${i < ai.mercados_extras.length - 1 ? "border-bottom:1px solid #0a2535" : ""}">
+        <span style="font-size:16px">${m.recomendacao === "APOSTAR" ? "✅" : "❌"}</span>
+        <div style="flex:1">
+          <div style="color:#e8f4ff;font-size:12px;font-family:'Rajdhani',monospace;font-weight:600">${m.mercado}</div>
+          <div style="color:#2a5a70;font-size:11px">${m.motivo}</div>
+        </div>
+        ${badge(m.recomendacao === "APOSTAR" ? "#00ff88" : "#ff3355", m.recomendacao)}
+      </div>
+    `).join("");
+  }
+
+  // Forma dos times
+  document.getElementById("cards-forma").innerHTML = [mandante, visitante].map((t, i) => `
+    <div class="panel" style="margin-bottom:0">
+      <lbl>${i === 0 ? "🏠" : "✈️"} ${t.nome}</lbl>
+      <div style="display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap">
+        ${(t.forma || []).map(r => {
+          const c = r === "W" ? "#00ff88" : r === "D" ? "#ffd700" : "#ff3355";
+          return `<div style="width:24px;height:24px;border-radius:50%;background:${c}15;border:1.5px solid ${c};color:${c};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold">${r}</div>`;
+        }).join("")}
+      </div>
+      <div style="font-size:11px;display:flex;flex-direction:column;gap:4px">
+        <div style="display:flex;justify-content:space-between"><span style="color:#2a5a70">⚽ Gols/jogo</span><span style="color:#00ff88">${t.avgS}</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:#2a5a70">🛡 Sofridos</span><span style="color:#ff8c00">${t.avgC}</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:#2a5a70">📊 Over 2.5</span><span style="color:#00b4ff">${t.over25}%</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:#2a5a70">🔁 Ambas marcam</span><span style="color:#ffd700">${t.btts}%</span></div>
+      </div>
+    </div>
+  `).join("");
+
+  // H2H
+  if (h2h?.length) {
+    document.getElementById("lista-h2h").innerHTML = h2h.slice(0, 5).map((h, i) => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;${i < Math.min(h2h.length, 5) - 1 ? "border-bottom:1px solid #0a2535" : ""};font-size:11px;gap:6px">
+        <span style="color:#2a5a70;width:75px;flex-shrink:0">${h.data}</span>
+        <span style="color:#a0cce0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.mandante}</span>
+        <span style="color:#00b4ff;font-weight:bold;font-family:'Orbitron',monospace;font-size:12px;margin:0 6px">${h.placar}</span>
+        <span style="color:#00ff88;flex:1;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.vencedor}</span>
+        ${badge(h.totalGols > 2 ? "#00ff88" : "#2a5a70", "G:" + h.totalGols)}
+      </div>
+    `).join("");
+  } else {
+    document.getElementById("lista-h2h").innerHTML = "<div style='color:#2a5a70;font-size:12px'>Sem confrontos diretos encontrados</div>";
+  }
+
+  mostrarResultado();
+  trocarTab("analise", document.querySelector(".tab.on") || document.querySelector(".tab"));
+}
+
+// ============================================================
+// Helpers UI
+// ============================================================
+function badge(cor, txt) {
+  return `<span class="badge" style="background:${cor}18;border:1px solid ${cor}44;color:${cor}">${txt}</span>`;
+}
+
+function setLoading(on) {
+  document.getElementById("btn-analisar").disabled = on;
+  document.getElementById("status-msg").style.display = on ? "flex" : "none";
+  document.getElementById("erro-msg").style.display = "none";
+  if (!on) document.getElementById("status-txt").textContent = "";
+}
+
+function setStatus(txt) {
+  document.getElementById("status-txt").textContent = txt;
+}
+
+function mostrarErro(msg) {
+  const el = document.getElementById("erro-msg");
+  el.style.display = "block";
+  el.textContent = "❌ " + msg;
+}
+
+function mostrarResultado() {
+  document.getElementById("box-busca").style.display = "none";
+  document.getElementById("box-historico").classList.add("hidden");
+  document.getElementById("box-resultado").classList.remove("hidden");
+  document.getElementById("box-resultado").classList.add("fade");
+}
+
+function esconderResultado() {
+  document.getElementById("box-resultado").classList.add("hidden");
+}
+
+function novaAnalise() {
+  document.getElementById("box-resultado").classList.add("hidden");
+  document.getElementById("box-busca").style.display = "block";
+  document.getElementById("inp-jogo").value = "";
+  renderizarHistorico();
+  document.getElementById("inp-jogo").focus();
+}
+
+function trocarTab(id, el) {
+  ["analise", "gestao", "mercados", "dados"].forEach(t => {
+    document.getElementById("tab-" + t).classList.add("hidden");
+  });
+  document.querySelectorAll(".tab").forEach(b => b.classList.remove("on"));
+  document.getElementById("tab-" + id).classList.remove("hidden");
+  if (el) el.classList.add("on");
+}
+
+function salvarHistorico(query, ai) {
+  const entry = { query, risco: ai.alerta_risco, veredicto: ai.veredicto, time: new Date().toLocaleTimeString("pt-BR") };
+  historicoLocal = [entry, ...historicoLocal].slice(0, 8);
+  localStorage.setItem("sai_hist", JSON.stringify(historicoLocal));
+  renderizarHistorico();
+}
+
+function renderizarHistorico() {
+  if (!historicoLocal.length) return;
+  const box = document.getElementById("box-historico");
+  const lista = document.getElementById("lista-historico");
+  box.classList.remove("hidden");
+  lista.innerHTML = historicoLocal.map(h => {
+    const cor = h.veredicto === "APOSTAR" ? "#00ff88" : "#ff3355";
+    const corRisco = h.risco === "BAIXO" ? "#00ff88" : h.risco === "MÉDIO" ? "#ffd700" : "#ff3355";
+    return `<div onclick="document.getElementById('inp-jogo').value='${h.query}'" style="display:flex;align-items:center;gap:10px;padding:7px 10px;background:#000d18;border-radius:6px;cursor:pointer;border:1px solid #0a2535;margin-bottom:6px">
+      <span style="font-size:16px">${h.veredicto === "APOSTAR" ? "✅" : "⏸"}</span>
+      <span style="flex:1;color:#a0cce0;font-size:12px">${h.query}</span>
+      <span style="color:#2a5a70;font-size:10px">${h.time}</span>
+      <span style="color:${corRisco};font-size:10px">● ${h.risco}</span>
+    </div>`;
+  }).join("");
+}
+
+// Init
+renderizarHistorico();
+</script>
+</body>
+</html>
